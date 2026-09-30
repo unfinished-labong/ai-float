@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="16dp" android:gravity="center">
+    <Button android:id="@+id/btnStart" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. 켜기" android:layout_marginBottom="10dp"/>
+    <Button android:id="@+id/btnStop" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. 끄기" android:layout_marginBottom="10dp"/>
+    <Button android:id="@+id/btnInputPrompt" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3. 프롬프트 입력하기" android:layout_marginBottom="10dp"/>
+    <Button android:id="@+id/btnInputApi" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="4. API 입력하기"/>
+</LinearLayout>

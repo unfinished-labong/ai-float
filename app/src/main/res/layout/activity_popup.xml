@@ -19,14 +19,13 @@
             android:textSize="16sp"
             android:layout_marginBottom="8dp"/>
 
-        <!-- 입력창 크기 확대 및 글씨색 검정색 고정 -->
         <EditText
             android:id="@+id/etUserInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minLines="4"
             android:gravity="top|start"
-            android:hint="예: 더 정중하게 바꿔줘"
+            android:hint="예: 강남역 7시 ㄱㄱ"
             android:textColor="#000000"
             android:textColorHint="#888888"
             android:background="#FFFFFF"
@@ -40,7 +39,6 @@
             android:text="전송"
             android:layout_marginBottom="16dp"/>
 
-        <!-- 결과가 길어도 모두 보이도록 설정 -->
         <Button
             android:id="@+id/btnOption1"
             android:layout_width="match_parent"
@@ -60,6 +58,35 @@
             android:textColor="#000000"
             android:backgroundTint="#E0E0E0"
             android:gravity="start|center_vertical"
-            android:padding="12dp"/>
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- 새로 추가된 기능 버튼들 (처음엔 숨김 처리) -->
+        <LinearLayout
+            android:id="@+id/layoutExtraButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/btnRefresh"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔄 다시 생성"
+                android:backgroundTint="#2196F3"
+                android:layout_marginEnd="4dp"/>
+
+            <Button
+                android:id="@+id/btnUseOriginal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="✍️ 내 초안 쓰기"
+                android:backgroundTint="#4CAF50"
+                android:layout_marginStart="4dp"/>
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

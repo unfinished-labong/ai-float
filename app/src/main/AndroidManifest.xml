@@ -15,7 +15,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".AiPopupActivity" android:theme="@style/Theme.AppCompat.Translucent" android:excludeFromRecents="true" android:exported="false"/>
+        
+        <!-- 테마를 확실한 다이얼로그(팝업) 창으로 강제 지정 -->
+        <activity 
+            android:name=".AiPopupActivity" 
+            android:theme="@style/Theme.AppCompat.Light.Dialog" 
+            android:excludeFromRecents="true" 
+            android:exported="false"/>
+            
         <service android:name=".FloatingService" android:exported="false" />
     </application>
 </manifest>

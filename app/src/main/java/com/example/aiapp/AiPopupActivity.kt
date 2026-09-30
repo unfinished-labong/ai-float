@@ -8,6 +8,10 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONObject
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
 import kotlin.concurrent.thread
 
 class AiPopupActivity : AppCompatActivity() {
@@ -20,11 +24,14 @@ class AiPopupActivity : AppCompatActivity() {
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         val clipData = clipboardManager.primaryClip
+        
+        // 클립보드에 텍스트가 있는지 확인
         if (clipData != null && clipData.itemCount > 0) {
             copiedText = clipData.getItemAt(0).text.toString()
+            // 복사된 원본 텍스트를 클립보드에서 삭제
             clipboardManager.setPrimaryClip(ClipData.newPlainText("empty", ""))
         } else {
-            Toast.makeText(this, "복사된 텍스트가 없습니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "복사된 텍스트가 없습니다. 텍스트를 먼저 복사해주세요.", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -36,28 +43,99 @@ class AiPopupActivity : AppCompatActivity() {
 
         btnSend.setOnClickListener {
             val userInstruction = etUserInput.text.toString()
-            btnSend.text = "AI가 작성 중..."
+            btnSend.text = "DeepSeek가 작성 중..."
             btnSend.isEnabled = false
 
-            // TODO: 저장된 API 키를 불러와 실제 API 연동 필요 (현재는 더미 응답)
+            val prefs = getSharedPreferences("AI_APP_PREFS", MODE_PRIVATE)
+            val apiKey = prefs.getString("API_KEY", "") ?: ""
+            // DeepSeek에게 응답 형식을 강제하는 프롬프트
+            val defaultSystemPrompt = "너는 텍스트 변환기야. 사용자의 원본 텍스트를 지시사항에 맞게 변환해. 반드시 2가지 다른 버전을 만들어내고, 다른 사족 없이 [\"버전1\", \"버전2\"] 형태의 JSON 배열(Array)로만 대답해."
+            val systemPrompt = prefs.getString("PROMPT_TEXT", "")?.takeIf { it.isNotBlank() } ?: defaultSystemPrompt
+
+            if (apiKey.isEmpty()) {
+                Toast.makeText(this, "앱 메인화면에서 DeepSeek API 키를 먼저 입력해주세요.", Toast.LENGTH_LONG).show()
+                btnSend.text = "전송"
+                btnSend.isEnabled = true
+                return@setOnClickListener
+            }
+
             thread {
-                Thread.sleep(1500)
-                val answer1 = "[옵션1] 원본: $copiedText \n요청: $userInstruction 반영 완료."
-                val answer2 = "[옵션2] 원본: $copiedText \n요청: $userInstruction 다른 버전."
-                
-                runOnUiThread {
-                    btnOption1.visibility = View.VISIBLE
-                    btnOption2.visibility = View.VISIBLE
-                    btnOption1.text = answer1
-                    btnOption2.text = answer2
-                    btnSend.visibility = View.GONE
+                try {
+                    // OpenAI 대신 DeepSeek API 엔드포인트 주소 사용
+                    val url = URL("https://api.deepseek.com/chat/completions")
+                    val conn = url.openConnection() as HttpURLConnection
+                    conn.requestMethod = "POST"
+                    conn.setRequestProperty("Authorization", "Bearer $apiKey")
+                    conn.setRequestProperty("Content-Type", "application/json")
+                    conn.doOutput = true
+
+                    val prompt = "원본 텍스트: $copiedText\n사용자 지시사항: $userInstruction"
+                    
+                    val jsonBody = JSONObject().apply {
+                        put("model", "deepseek-chat") // DeepSeek 모델명 적용
+                        put("messages", org.json.JSONArray().apply {
+                            put(JSONObject().apply { put("role", "system"); put("content", systemPrompt) })
+                            put(JSONObject().apply { put("role", "user"); put("content", prompt) })
+                        })
+                        put("temperature", 0.7)
+                    }
+
+                    val writer = OutputStreamWriter(conn.outputStream)
+                    writer.write(jsonBody.toString())
+                    writer.flush()
+                    writer.close()
+
+                    if (conn.responseCode == 200) {
+                        val responseStr = conn.inputStream.bufferedReader().use { it.readText() }
+                        val content = JSONObject(responseStr)
+                            .getJSONArray("choices")
+                            .getJSONObject(0)
+                            .getJSONObject("message")
+                            .getString("content")
+                        
+                        var answer1 = "결과를 읽을 수 없습니다."
+                        var answer2 = "다시 시도해주세요."
+                        
+                        try {
+                            // DeepSeek가 응답한 JSON 배열에서 텍스트 2개 추출
+                            val resultList = org.json.JSONArray(content)
+                            answer1 = resultList.getString(0)
+                            answer2 = resultList.getString(1)
+                        } catch (e: Exception) {
+                            // AI가 JSON 형식을 안 지켰을 경우 강제 분리 (Fallback)
+                            val parts = content.replace("[\\[\\]\"]".toRegex(), "").split(",")
+                            if (parts.isNotEmpty()) answer1 = parts[0].trim()
+                            if (parts.size > 1) answer2 = parts[1].trim()
+                        }
+
+                        runOnUiThread {
+                            btnOption1.visibility = View.VISIBLE
+                            btnOption2.visibility = View.VISIBLE
+                            btnOption1.text = answer1
+                            btnOption2.text = answer2
+                            btnSend.visibility = View.GONE
+                        }
+                    } else {
+                        runOnUiThread {
+                            Toast.makeText(this@AiPopupActivity, "API 오류: ${conn.responseCode}", Toast.LENGTH_SHORT).show()
+                            btnSend.text = "전송"
+                            btnSend.isEnabled = true
+                        }
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        Toast.makeText(this@AiPopupActivity, "네트워크 통신 실패: 인터넷 연결이나 API 키를 확인하세요.", Toast.LENGTH_SHORT).show()
+                        btnSend.text = "전송"
+                        btnSend.isEnabled = true
+                    }
                 }
             }
         }
 
+        // 옵션 버튼을 누르면 선택한 텍스트를 클립보드에 다시 복사
         val onOptionSelected = View.OnClickListener { view ->
             clipboardManager.setPrimaryClip(ClipData.newPlainText("AI_Result", (view as Button).text.toString()))
-            Toast.makeText(this, "결과가 클립보드에 복사되었습니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "클립보드에 복사되었습니다. 원하는 곳에 붙여넣기 하세요.", Toast.LENGTH_LONG).show()
             finish()
         }
 

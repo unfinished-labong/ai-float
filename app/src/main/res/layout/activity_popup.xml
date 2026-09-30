@@ -1,11 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:orientation="vertical" android:padding="16dp" android:background="#E6FFFFFF"
-    android:layout_gravity="center" android:layout_margin="24dp">
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="AI 지시사항 입력:" android:textStyle="bold" android:textColor="#000000" android:layout_marginBottom="8dp"/>
-    <EditText android:id="@+id/etUserInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="예: 더 정중하게 바꿔줘" android:layout_marginBottom="16dp"/>
-    <Button android:id="@+id/btnSend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="전송" android:layout_marginBottom="8dp"/>
-    <Button android:id="@+id/btnOption1" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" android:layout_marginBottom="8dp"/>
-    <Button android:id="@+id/btnOption2" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone"/>
-</LinearLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#F5F5F5"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AI 지시사항 입력:"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- 입력창 크기 확대 및 글씨색 검정색 고정 -->
+        <EditText
+            android:id="@+id/etUserInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minLines="4"
+            android:gravity="top|start"
+            android:hint="예: 더 정중하게 바꿔줘"
+            android:textColor="#000000"
+            android:textColorHint="#888888"
+            android:background="#FFFFFF"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="전송"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 결과가 길어도 모두 보이도록 설정 -->
+        <Button
+            android:id="@+id/btnOption1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:textColor="#000000"
+            android:backgroundTint="#E0E0E0"
+            android:gravity="start|center_vertical"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btnOption2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:textColor="#000000"
+            android:backgroundTint="#E0E0E0"
+            android:gravity="start|center_vertical"
+            android:padding="12dp"/>
+    </LinearLayout>
+</ScrollView>

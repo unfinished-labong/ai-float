@@ -17,7 +17,7 @@ import kotlin.concurrent.thread
 class AiPopupActivity : AppCompatActivity() {
     private lateinit var clipboardManager: ClipboardManager
     private var copiedText: String = ""
-    private var isClipboardRead = false // 클립보드를 중복으로 읽지 않도록 방지하는 플래그
+    private var isClipboardRead = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,7 +25,6 @@ class AiPopupActivity : AppCompatActivity() {
 
         clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         
-        // 버튼 및 UI 초기화 (클립보드 읽기는 여기서 하지 않음)
         val etUserInput = findViewById<EditText>(R.id.etUserInput)
         val btnSend = findViewById<Button>(R.id.btnSend)
         val btnOption1 = findViewById<Button>(R.id.btnOption1)
@@ -66,6 +65,7 @@ class AiPopupActivity : AppCompatActivity() {
                             put(JSONObject().apply { put("role", "user"); put("content", prompt) })
                         })
                         put("temperature", 0.7)
+                        put("max_tokens", 4000) // 출력 글자 수 제한 대폭 상향
                     }
 
                     val writer = OutputStreamWriter(conn.outputStream)
@@ -75,11 +75,14 @@ class AiPopupActivity : AppCompatActivity() {
 
                     if (conn.responseCode == 200) {
                         val responseStr = conn.inputStream.bufferedReader().use { it.readText() }
-                        val content = JSONObject(responseStr)
+                        // 마크다운 찌꺼기(```json 등)가 붙어올 경우를 대비해 텍스트 정제
+                        var content = JSONObject(responseStr)
                             .getJSONArray("choices")
                             .getJSONObject(0)
                             .getJSONObject("message")
                             .getString("content")
+                        
+                        content = content.replace("```json", "").replace("```", "").trim()
                         
                         var answer1 = "결과를 읽을 수 없습니다."
                         var answer2 = "다시 시도해주세요."
@@ -89,9 +92,9 @@ class AiPopupActivity : AppCompatActivity() {
                             answer1 = resultList.getString(0)
                             answer2 = resultList.getString(1)
                         } catch (e: Exception) {
-                            val parts = content.replace("[\\[\\]\"]".toRegex(), "").split(",")
-                            if (parts.isNotEmpty()) answer1 = parts[0].trim()
-                            if (parts.size > 1) answer2 = parts[1].trim()
+                            val parts = content.split("\",\"")
+                            if (parts.isNotEmpty()) answer1 = parts[0].replace("[\\[\\]\"]".toRegex(), "").trim()
+                            if (parts.size > 1) answer2 = parts[1].replace("[\\[\\]\"]".toRegex(), "").trim()
                         }
 
                         runOnUiThread {
@@ -128,17 +131,15 @@ class AiPopupActivity : AppCompatActivity() {
         btnOption2.setOnClickListener(onOptionSelected)
     }
 
-    // 팝업창이 화면에 완전히 뜨고 포커스를 얻은 직후에 실행되는 함수
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         
         if (hasFocus && !isClipboardRead) {
-            isClipboardRead = true // 한 번만 읽도록 처리
+            isClipboardRead = true
             val clipData = clipboardManager.primaryClip
             
             if (clipData != null && clipData.itemCount > 0) {
                 copiedText = clipData.getItemAt(0).text.toString()
-                // 성공적으로 읽었으면 클립보드 비우기
                 clipboardManager.setPrimaryClip(ClipData.newPlainText("empty", ""))
             } else {
                 Toast.makeText(this, "복사된 텍스트가 없습니다.", Toast.LENGTH_SHORT).show()
